@@ -1,39 +1,33 @@
-import { useState, useEffect } from "react";
-import BlogCard from "./BlogCard.com";
-import blogData from "../../../data/blog.json";
-import type { Blog } from "../../../types/blog/Blog.type";
-import PaginationComponent from "../../common/pagination.com";
-const typedBlogData = blogData as Blog[];
+import { useEffect, useState } from "react";
+import { BlogService } from "../../../services/blog/blog.service";
+import type { Blog } from "../../../types/blog/Blog.res.type";
+import type { BlogRequest } from "../../../types/blog/Blog.req.type";
 
-export default function BlogList() {
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const itemsPerPage = 6;
+const BlogList = () => {
+  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const totalPages = Math.ceil(typedBlogData.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedBlogs = typedBlogData.slice(
-    startIndex,
-    startIndex + itemsPerPage
-  );
-
-  // Cuộn về đầu khi chuyển trang
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [currentPage]);
+    const fetchBlogs = async () => {
+      setLoading(true);
+      const params: BlogRequest = { pageNumber: 1, pageSize: 10 };
+      try {
+        const res = await BlogService.getAllBlogs(params);
+        setBlogs(res.data.data || []);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBlogs();
+  }, []);
 
   return (
-    <>
-      <div className="flex flex-col items-center">
-        {paginatedBlogs.map((blog) => (
-          <BlogCard blog={blog} key={blog.id} />
-        ))}
-      </div>
-
-      <PaginationComponent
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-      />
-    </>
+    <div>
+      {loading
+        ? "Đang tải..."
+        : blogs.map((blog) => <div key={blog.id}>{blog.userId}</div>)}
+    </div>
   );
-}
+};
+
+export default BlogList;
